@@ -1,6 +1,6 @@
-include(../../plugins.pri)
-
-TARGET = $$PLUGINS_PREFIX/Input/sc68
+# references:
+# https://github.com/cspiegel/qmmp-adplug
+# https://github.com/cspiegel/qmmp-openmpt
 
 HEADERS += decodersc68factory.h \
            decoder_sc68.h \
@@ -86,8 +86,23 @@ DEFINES += HAVE_STDLIB_H \
            EMU68_MONOLITIC \
            EMU68_EXPORT
 
+CONFIG += warn_on plugin link_pkgconfig
+
+TEMPLATE = lib
+
+QMAKE_CLEAN += lib$${TARGET}.so
+
 unix {
-    target.path = $$PLUGIN_DIR/Input
-    INSTALLS += target
-    QMAKE_CLEAN = $$PLUGINS_PREFIX/Input/libsc68.so
+	CONFIG += link_pkgconfig
+	PKGCONFIG += qmmp
+	
+	QMMP_PREFIX = $$system(pkg-config qmmp --variable=prefix)
+	PLUGIN_DIR = $$system(pkg-config qmmp --variable=plugindir)/Input
+	LOCAL_INCLUDES = $${QMMP_PREFIX}/include
+	LOCAL_INCLUDES -= $$QMAKE_DEFAULT_INCDIRS
+	INCLUDEPATH += $$LOCAL_INCLUDES
+	
+	plugin.path = $${PLUGIN_DIR}
+	plugin.files = lib$${TARGET}.so
+	INSTALLS += plugin
 }
