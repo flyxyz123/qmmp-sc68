@@ -2,7 +2,8 @@
 #include "decoder_sc68.h"
 #include "decodersc68factory.h"
 
-#include <QMessageBox>
+#include <QtWidgets/QMessageBox>
+#include <QRegularExpression>
 
 bool DecoderSC68Factory::canDecode(QIODevice *) const
 {
@@ -33,7 +34,7 @@ QList<TrackInfo*> DecoderSC68Factory::createPlayList(const QString &path, TrackI
     {
         QString filePath = path;
         filePath.remove("sc68://");
-        filePath.remove(QRegExp("#\\d+$"));
+        filePath.remove(QRegularExpression("#\\d+$"));
 
         const int track = path.section("#", -1).toInt();
         QList<TrackInfo*> list = createPlayList(filePath, parts, ignoredFiles);

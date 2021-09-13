@@ -1,6 +1,7 @@
 #include "sc68helper.h"
 
 #include <QFile>
+#include <QRegularExpression>
 
 void in_c68_meta_from_music_info(TrackInfo *info, sc68_music_info_t *ti)
 {
@@ -249,7 +250,7 @@ QString SC68Helper::cleanPath() const
     if(m_path.contains("://"))
     {
         path.remove("sc68://");
-        path.remove(QRegExp("#\\d+$"));
+        path.remove(QRegularExpression("#\\d+$"));
     }
     return path;
 }
