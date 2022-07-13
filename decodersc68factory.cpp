@@ -1,24 +1,32 @@
+#include "decodersc68factory.h"
 #include "sc68helper.h"
 #include "decoder_sc68.h"
-#include "decodersc68factory.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QRegularExpression>
 
-bool DecoderSC68Factory::canDecode(QIODevice *) const
+bool DecoderSC68Factory::canDecode(QIODevice *input) const
 {
-    return false;
+    QFile *file = static_cast<QFile*>(input);
+    if(!file)
+    {
+        return false;
+    }
+
+    SC68Helper helper(file->fileName());
+    return helper.initialize();
 }
 
 DecoderProperties DecoderSC68Factory::properties() const
 {
     DecoderProperties properties;
-    properties.name = "SC68 Plugin";
+    properties.name = tr("SC68 Plugin");
     properties.shortName = "sc68";
-    properties.filters << "*.sc68";
+    properties.filters << "*.sc68" << "*.snd" << "*.sndh";
     properties.description = "Atari ST(E) And Amiga Audio File";
-    properties.protocols << "sc68";
+    properties.protocols << "file" << "sc68";
     properties.noInput = true;
+    properties.hasAbout = true;
     return properties;
 }
 
@@ -28,7 +36,7 @@ Decoder *DecoderSC68Factory::create(const QString &path, QIODevice *input)
     return new DecoderSC68(path);
 }
 
-QList<TrackInfo*> DecoderSC68Factory::createPlayList(const QString &path, TrackInfo::Parts parts, QStringList *ignoredFiles)
+QList<TrackInfo*> DecoderSC68Factory::createPlayList(const QString &path, TrackInfo::Parts parts, QStringList *ignoredPaths)
 {
     if(path.contains("://")) //is it one track?
     {
@@ -37,22 +45,25 @@ QList<TrackInfo*> DecoderSC68Factory::createPlayList(const QString &path, TrackI
         filePath.remove(QRegularExpression("#\\d+$"));
 
         const int track = path.section("#", -1).toInt();
-        QList<TrackInfo*> list = createPlayList(filePath, parts, ignoredFiles);
-        if(list.isEmpty() || track <= 0 || track > list.count())
+        QList<TrackInfo*> playlist = createPlayList(filePath, parts, ignoredPaths);
+        if(playlist.isEmpty() || track <= 0 || track > playlist.count())
         {
-            qDeleteAll(list);
-            list.clear();
-            return list;
+            qDeleteAll(playlist);
+            playlist.clear();
+            return playlist;
         }
 
-        TrackInfo *info = list.takeAt(track - 1);
-        qDeleteAll(list);
-        return QList<TrackInfo*>() << info;
+        TrackInfo *info = playlist.takeAt(track - 1);
+        qDeleteAll(playlist);
+        playlist.clear();
+        return playlist << info;
     }
     else
     {
-        if(ignoredFiles)
-            ignoredFiles->push_back(path);
+        if(ignoredPaths)
+        {
+            ignoredPaths->push_back(path);
+        }
     }
 
     SC68Helper helper(path);
@@ -78,9 +89,9 @@ void DecoderSC68Factory::showSettings(QWidget *parent)
 
 void DecoderSC68Factory::showAbout(QWidget *parent)
 {
-    QMessageBox::about (parent, tr("About SC68 Reader Plugin"),
-                        tr("Qmmp SC68 Reader Plugin")+"\n"+
-                        tr("Written by: Greedysky <greedysky@163.com>"));
+    QMessageBox::about(parent, tr("About SC68 Reader Plugin"),
+                       tr("Qmmp SC68 Reader Plugin") + "\n" +
+                       tr("Written by: Greedysky <greedysky@163.com>"));
 }
 
 QString DecoderSC68Factory::translation() const
